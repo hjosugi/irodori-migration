@@ -2,6 +2,15 @@
 
 All notable changes to `irodori-migration` are documented here.
 
+## 0.1.3 - 2026-06-29
+
+- Added ignored live SQL smoke tests for generated Postgres and MySQL checksum
+  queries.
+- Added CI services for Postgres/MySQL live SQL verification.
+- Added an MSRV check job for Rust 1.85.
+- Added `docs/testing.md`, `scripts/verify.sh`, and `SECURITY.md`.
+- Included integration tests and scripts in packaged release artifacts.
+
 ## 0.1.2 - 2026-06-29
 
 - Added CI workflow for formatting, tests, clippy, and package verification.

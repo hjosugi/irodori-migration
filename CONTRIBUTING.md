@@ -16,6 +16,14 @@ rm -f Cargo.lock
 cargo publish --dry-run
 ```
 
+Or run:
+
+```sh
+scripts/verify.sh
+```
+
+For live database smoke tests, see [docs/testing.md](docs/testing.md).
+
 ## Design Rules
 
 - Do not add database connections, credential storage, or direct DDL execution to
@@ -24,8 +32,10 @@ cargo publish --dry-run
 - Destructive migration output must be tagged or called out before a host can
   execute it.
 - Cross-engine row comparison must make canonicalization explicit.
-- New behavior should include focused unit tests and, when it teaches usage,
-  an example under `examples/`.
+- New behavior should include focused unit tests and, when it teaches usage, an
+  example under `examples/`.
+- Generated SQL that is intended to execute on a real engine should have either
+  a unit-level SQL-shape test or a live smoke test under `tests/live_sql.rs`.
 - Keep public APIs small and stable enough for host applications to wrap.
 
 ## Release Checklist

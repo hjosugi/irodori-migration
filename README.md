@@ -39,13 +39,13 @@ deletes data. Callers should:
 
 ```toml
 [dependencies]
-irodori-migration = "0.1.2"
+irodori-migration = "0.1.3"
 ```
 
 Optional encoders:
 
 ```toml
-irodori-migration = { version = "0.1.2", features = ["avro", "parquet"] }
+irodori-migration = { version = "0.1.3", features = ["avro", "parquet"] }
 ```
 
 ## Quick Start
@@ -100,7 +100,11 @@ cargo package --list
 cargo publish --dry-run
 ```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for release steps and contribution rules.
+Use `scripts/verify.sh` to run the default local gate. Set
+`IRODORI_RUN_LIVE_SQL=1` to include ignored live Postgres/MySQL smoke tests.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for release steps and
+[docs/testing.md](docs/testing.md) for the full test matrix.
 
 ## Architecture
 

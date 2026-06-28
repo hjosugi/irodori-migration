@@ -37,3 +37,68 @@ jobs:
           rm -f Cargo.lock
           cargo package --list
           cargo publish --dry-run
+
+  msrv:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust 1.85
+        uses: dtolnay/rust-toolchain@1.85.0
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+
+      - name: MSRV check
+        run: cargo check --all-features
+
+  live-sql:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: irodori_migration
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d irodori_migration"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_DATABASE: irodori_migration
+          MYSQL_ROOT_PASSWORD: mysql
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "mysqladmin ping -h 127.0.0.1 -uroot -pmysql"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install database clients
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client default-mysql-client
+
+      - name: Run live SQL smoke tests
+        env:
+          IRODORI_POSTGRES_URL: postgres://postgres:postgres@127.0.0.1:5432/irodori_migration
+          IRODORI_MYSQL_HOST: 127.0.0.1
+          IRODORI_MYSQL_PORT: "3306"
+          IRODORI_MYSQL_USER: root
+          IRODORI_MYSQL_PASSWORD: mysql
+          IRODORI_MYSQL_DATABASE: irodori_migration
+        run: cargo test --test live_sql -- --ignored --test-threads=1
