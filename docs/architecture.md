@@ -11,6 +11,8 @@ single DDL runner.
 - **Recipe-style planning**: plan builders are deterministic functions over a
   spec, similar to OpenRewrite recipes over Lossless Semantic Trees. A second
   run with the same input should produce the same output.
+- **Dry-run first**: generated artifacts should expose recipe metadata,
+  before/after previews, and patch text before a host writes anything.
 - **Preview before apply**: every schema diff can become a migration script with
   destructive statements tagged before a host asks for approval.
 - **Integrity before speed**: counts, key counts, fingerprints, bucket diffs, and
@@ -46,8 +48,17 @@ single DDL runner.
 
 - `plan`: migration specs, runbooks, row-hash SQL, bucket-level diff SQL, failed
   bucket diff SQL, manifest DDL, and snippets.
+- `canonical`: explicit value rendering policies for cross-engine checksums,
+  including decimal scale, float precision, timestamp precision/timezone, Oracle
+  empty strings, text trimming/case, booleans, UUIDs, and binary hex.
+- `checksum`: chunked checksum SQL, checksum manifests, divergent-chunk queries,
+  adaptive chunking metadata, and repair-plan scaffolding inspired by
+  pt-table-checksum, pt-table-sync, and reladiff/data-diff.
 - `schema`: source-agnostic schema snapshots, structural diff, migration preview,
   and destructive statement tagging.
+- `recipe`: deterministic dry-run reporting for generated SQL/runbook artifacts.
+- `rollout`: expand/contract, dual-write, backfill, shadow-read, canary, cutover,
+  and contract runbook primitives.
 - `io`: tabular import previews and export encoders for CSV, TSV, SQL, JSON,
   NDJSON, Avro, and Parquet.
 - `export`: standalone progress/cancellation wrapper for row export streams.
@@ -62,8 +73,11 @@ single DDL runner.
 - reladiff: <https://github.com/erezsh/reladiff>
 - data-diff technical explanation: <https://github.com/datafold/data-diff/blob/master/docs/technical-explanation.md>
 - Percona pt-table-checksum: <https://docs.percona.com/percona-toolkit/pt-table-checksum.html>
+- Percona pt-table-sync: <https://docs.percona.com/percona-toolkit/pt-table-sync.html>
 - AWS DMS CDC and validation: <https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Task.CDC.html>
 - Debezium features: <https://debezium.io/documentation/reference/stable/features.html>
+- GitHub Scientist: <https://github.com/github/scientist>
+- AWS RDS blue/green best practices: <https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/blue-green-deployments-best-practices.html>
 - gh-ost: <https://github.com/github/gh-ost>
 - Stripe online migrations: <https://stripe.com/blog/online-migrations>
 - Figma database scaling: <https://www.figma.com/blog/how-figmas-databases-team-lived-to-tell-the-scale/>
