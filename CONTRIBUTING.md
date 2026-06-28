@@ -13,7 +13,7 @@ cargo test
 cargo test --all-features
 cargo clippy --all-features --all-targets -- -D warnings
 rm -f Cargo.lock
-cargo publish --dry-run
+cargo publish --dry-run --allow-dirty
 ```
 
 Or run:

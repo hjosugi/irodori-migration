@@ -88,7 +88,7 @@ More runnable examples are in [`examples/`](examples).
 
 ## Development
 
-Required Rust version: 1.85 or newer.
+Required Rust version: 1.88 or newer.
 
 ```sh
 cargo fmt -- --check
@@ -96,8 +96,8 @@ cargo test
 cargo test --all-features
 cargo clippy --all-features --all-targets -- -D warnings
 rm -f Cargo.lock
-cargo package --list
-cargo publish --dry-run
+cargo package --list --allow-dirty
+cargo publish --dry-run --allow-dirty
 ```
 
 Use `scripts/verify.sh` to run the default local gate. Set

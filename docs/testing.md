@@ -49,8 +49,8 @@ Before publishing:
 
 ```sh
 rm -f Cargo.lock
-cargo package --list
-cargo publish --dry-run
+cargo package --list --allow-dirty
+cargo publish --dry-run --allow-dirty
 ```
 
 Cargo-generated `.cargo_vcs_info.json`, `Cargo.lock`, and `Cargo.toml.orig` are

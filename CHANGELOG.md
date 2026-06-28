@@ -7,7 +7,7 @@ All notable changes to `irodori-migration` are documented here.
 - Added ignored live SQL smoke tests for generated Postgres and MySQL checksum
   queries.
 - Added CI services for Postgres/MySQL live SQL verification.
-- Added an MSRV check job for Rust 1.85.
+- Added an MSRV check job for Rust 1.88.
 - Added `docs/testing.md`, `scripts/verify.sh`, and `SECURITY.md`.
 - Included integration tests and scripts in packaged release artifacts.
 

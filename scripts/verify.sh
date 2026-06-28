@@ -11,5 +11,5 @@ if [[ "${IRODORI_RUN_LIVE_SQL:-0}" == "1" ]]; then
 fi
 
 rm -f Cargo.lock
-cargo package --list
-cargo publish --dry-run
+cargo package --list --allow-dirty
+cargo publish --dry-run --allow-dirty
