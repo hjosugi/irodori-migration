@@ -4,6 +4,8 @@
 //! SQL, scripts, manifests, and import/export streams, while host
 //! applications own credentials, network access, scheduling, and approval UX.
 
+#![forbid(unsafe_code)]
+
 pub mod canonical;
 pub mod checksum;
 pub mod dialect;

@@ -1,3 +1,15 @@
-/target/
+target/
 Cargo.lock
+Cargo.toml.orig
+
+.vscode/
+.idea/
+.DS_Store
+*.swp
+*.swo
+*.orig
+*.rej
 *.patch
+
+.env
+.env.*

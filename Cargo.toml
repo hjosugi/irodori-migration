@@ -1,15 +1,27 @@
 [package]
 name = "irodori-migration"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
+rust-version = "1.85"
 license = "MIT OR 0BSD"
 authors = ["Irodori Table contributors"]
 description = "Database migration planning, schema diff, data verification, and tabular import/export primitives for Irodori."
 repository = "https://github.com/hjosugi/irodori-migration"
+homepage = "https://github.com/hjosugi/irodori-migration"
+documentation = "https://docs.rs/irodori-migration"
 readme = "README.md"
 keywords = ["database", "migration", "schema", "diff", "export"]
 categories = ["database"]
-include = ["Cargo.toml", "LICENSE", "README.md", "docs/**/*.md", "src/**/*.rs"]
+include = [
+    "Cargo.toml",
+    "LICENSE",
+    "README.md",
+    "CHANGELOG.md",
+    "CONTRIBUTING.md",
+    "docs/**/*.md",
+    "examples/**/*.rs",
+    "src/**/*.rs",
+]
 
 [lib]
 path = "src/lib.rs"
@@ -26,3 +38,6 @@ apache-avro = { version = "0.21", optional = true }
 default = []
 parquet = ["dep:parquet", "dep:arrow"]
 avro = ["dep:apache-avro"]
+
+[package.metadata.docs.rs]
+all-features = true

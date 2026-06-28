@@ -64,7 +64,7 @@ where
         encoder.write_row(&cells)?;
         rows_written += 1;
 
-        if rows_written.is_multiple_of(progress_every) {
+        if rows_written % progress_every == 0 {
             control.progress(rows_written)?;
             if control.should_cancel() {
                 cancelled = true;

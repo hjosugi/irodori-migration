@@ -1,27 +1,54 @@
 # irodori-migration
 
-`irodori-migration` is the standalone migration core extracted from Irodori.
-It provides execution-free building blocks for database moves:
+`irodori-migration` is the execution-free migration core extracted from
+Irodori Table. It builds plans, SQL, previews, manifests, and import/export
+streams; host applications own credentials, network access, scheduling,
+approval UX, and actual execution.
+
+[![crates.io](https://img.shields.io/crates/v/irodori-migration.svg)](https://crates.io/crates/irodori-migration)
+[![docs.rs](https://docs.rs/irodori-migration/badge.svg)](https://docs.rs/irodori-migration)
+
+## What It Provides
 
 - schema snapshots, structural diffs, and destructive-change tagging
 - cross-engine migration runbooks and validation SQL
-- explicit cross-engine canonicalization policies for decimals, floats,
-  timestamps, NULLs, text, booleans, UUIDs, and bytes
+- explicit value canonicalization for decimals, floats, timestamps, NULLs,
+  text, booleans, UUIDs, bytes, and JSON
 - chunked checksum SQL inspired by pt-table-checksum and reladiff/data-diff
 - row-hash manifests, bucket-level diff SQL, and failed-bucket row diff SQL
-- recipe-style dry-run previews and rollout runbooks for expand/contract,
-  dual-write, shadow-read, canary, cutover, and contract phases
+- recipe-style dry-run previews with before/after text and patch output
+- rollout runbooks for expand/contract, dual-write, backfill, shadow-read,
+  canary, cutover, and contract phases
 - tabular import previews and export encoders for CSV, TSV, SQL, JSON, NDJSON,
   Avro, and Parquet
-- a small progress/cancellation export runner that host apps can wrap in their
-  own job system
+- a progress/cancellation export runner that host apps can wrap in their own job
+  system
 
-The crate does not open database connections, store credentials, or apply DDL.
-Applications should preview generated SQL, require explicit approval for
-destructive steps, run engine-specific safety checks, and verify data with
-counts, hashes, and row-level diffs before cutover.
+## Safety Model
 
-## Example
+This crate never opens database connections, stores credentials, applies DDL, or
+deletes data. Callers should:
+
+1. Preview generated SQL and scripts.
+2. Require explicit approval for destructive statements.
+3. Pin cross-engine canonicalization rules before hashing.
+4. Compare counts and checksums before row-level diff.
+5. Use shadow reads, canaries, and rollback gates before cutover.
+
+## Install
+
+```toml
+[dependencies]
+irodori-migration = "0.1.2"
+```
+
+Optional encoders:
+
+```toml
+irodori-migration = { version = "0.1.2", features = ["avro", "parquet"] }
+```
+
+## Quick Start
 
 ```rust
 use irodori_migration::{
@@ -57,13 +84,44 @@ let checksum = irodori_migration::chunk_checksum_select_sql(
 assert!(checksum.contains("COUNT(*)"));
 ```
 
-## Repository Status
+More runnable examples are in [`examples/`](examples).
 
-This repo is publish-ready locally. Push it to
-`https://github.com/hjosugi/irodori-migration`, then publish with:
+## Development
+
+Required Rust version: 1.85 or newer.
 
 ```sh
+cargo fmt -- --check
+cargo test
 cargo test --all-features
+cargo clippy --all-features --all-targets -- -D warnings
+rm -f Cargo.lock
+cargo package --list
 cargo publish --dry-run
-cargo publish
 ```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for release steps and contribution rules.
+
+## Architecture
+
+The design is based on deterministic, reviewable transformations:
+
+- OpenRewrite-style recipe previews and dry-run reporting
+- Percona/reladiff-style chunked checksums and recursive narrowing
+- explicit cross-engine canonicalization before hashing
+- expand/contract rollout with dual-write, backfill, shadow-read, canary, and
+  cutover gates
+
+See [docs/architecture.md](docs/architecture.md).
+
+## License
+
+Irodori-authored code in this repository is available under `MIT OR 0BSD` unless
+a file says otherwise. See [LICENSE](LICENSE).
+
+## Disclaimer
+
+Migration planning and diff helpers can produce destructive or incomplete plans
+when used with real systems. Review generated SQL, backups, permissions, and
+target connections before execution. For the broader product disclaimer, see
+<https://hjosugi.github.io/irodori-docs/disclaimer.html>.
