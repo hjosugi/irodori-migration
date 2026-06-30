@@ -1,131 +1,56 @@
 # irodori-migration
 
-`irodori-migration` is the execution-free migration core extracted from
-Irodori Table. It builds plans, SQL, previews, manifests, and import/export
-streams; host applications own credentials, network access, scheduling,
-approval UX, and actual execution.
+Execution-free migration planning and data-diff primitives for Rust apps.
 
-[![crates.io](https://img.shields.io/crates/v/irodori-migration.svg)](https://crates.io/crates/irodori-migration)
-[![docs.rs](https://docs.rs/irodori-migration/badge.svg)](https://docs.rs/irodori-migration)
+It generates SQL, plans, manifests, previews, and export streams. It never opens
+database connections or stores credentials.
 
-## What It Provides
+[crates.io](https://crates.io/crates/irodori-migration) |
+[docs.rs](https://docs.rs/irodori-migration)
 
-- schema snapshots, structural diffs, and destructive-change tagging
-- cross-engine migration runbooks and validation SQL
-- explicit value canonicalization for decimals, floats, timestamps, NULLs,
-  text, booleans, UUIDs, bytes, and JSON
-- chunked checksum SQL inspired by pt-table-checksum and reladiff/data-diff
-- row-hash manifests, bucket-level diff SQL, and failed-bucket row diff SQL
-- recipe-style dry-run previews with before/after text and patch output
-- rollout runbooks for expand/contract, dual-write, backfill, shadow-read,
-  canary, cutover, and contract phases
-- tabular import previews and export encoders for CSV, TSV, SQL, JSON, NDJSON,
-  Avro, and Parquet
-- a progress/cancellation export runner that host apps can wrap in their own job
-  system
+## Provides
 
-## Safety Model
+- schema snapshots and diffs
+- destructive-change labels
+- migration runbooks
+- row-hash and checksum SQL
+- bucket and row-level diff SQL
+- CSV, TSV, SQL, JSON, NDJSON, Avro, and Parquet export helpers
+- progress and cancellation hooks for host job systems
 
-This crate never opens database connections, stores credentials, applies DDL, or
-deletes data. Callers should:
-
-1. Preview generated SQL and scripts.
-2. Require explicit approval for destructive statements.
-3. Pin cross-engine canonicalization rules before hashing.
-4. Compare counts and checksums before row-level diff.
-5. Use shadow reads, canaries, and rollback gates before cutover.
-
-## Install
+## Use
 
 ```toml
 [dependencies]
-irodori-migration = "0.1.3"
+irodori-migration = "0.2"
 ```
-
-Optional encoders:
-
-```toml
-irodori-migration = { version = "0.1.3", features = ["avro", "parquet"] }
-```
-
-## Quick Start
 
 ```rust
-use irodori_migration::{
-    build_migration_plan, CanonicalColumn, CanonicalType, ChunkChecksumConfig,
-    MigrationEngine, MigrationExportFormat, MigrationSpec,
-};
+use irodori_migration::{build_migration_plan, MigrationEngine, MigrationSpec};
 
 let spec = MigrationSpec {
-    source_engine: MigrationEngine::Hive,
-    target_engine: MigrationEngine::Snowflake,
-    source_table: "legacy.orders".into(),
-    target_table: "analytics.orders".into(),
-    key_columns: vec!["order_id".into()],
-    compare_columns: vec!["order_id".into(), "amount".into(), "updated_at".into()],
-    export_format: MigrationExportFormat::Parquet,
+    source_engine: MigrationEngine::Postgres,
+    target_engine: MigrationEngine::MySql,
+    source_table: "public.orders".into(),
+    target_table: "orders".into(),
+    key_columns: vec!["id".into()],
+    compare_columns: vec!["id".into(), "amount".into()],
     ..MigrationSpec::default()
 };
 
 let plan = build_migration_plan(&spec);
-assert!(plan.source_sql.contains("irodori_row_hash"));
-assert!(plan.diff_sql.contains("Bucket-level diff"));
-
-let checksum = irodori_migration::chunk_checksum_select_sql(
-    MigrationEngine::Postgres,
-    &ChunkChecksumConfig::new(
-        "public.orders",
-        vec![
-            CanonicalColumn::new("order_id", CanonicalType::Integer),
-            CanonicalColumn::new("amount", CanonicalType::Decimal { scale: 2 }),
-        ],
-    ),
-);
-assert!(checksum.contains("COUNT(*)"));
+println!("{}", plan.diff_sql);
 ```
 
-More runnable examples are in [`examples/`](examples).
-
-## Development
-
-Required Rust version: 1.88 or newer.
+## Develop
 
 ```sh
 cargo fmt -- --check
 cargo test
 cargo test --all-features
 cargo clippy --all-features --all-targets -- -D warnings
-rm -f Cargo.lock
-cargo package --list --allow-dirty
-cargo publish --dry-run --allow-dirty
 ```
 
-Use `scripts/verify.sh` to run the default local gate. Set
-`IRODORI_RUN_LIVE_SQL=1` to include ignored live Postgres/MySQL smoke tests.
+Live SQL smoke tests are ignored by default. See [docs/testing.md](docs/testing.md).
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for release steps and
-[docs/testing.md](docs/testing.md) for the full test matrix.
-
-## Architecture
-
-The design is based on deterministic, reviewable transformations:
-
-- OpenRewrite-style recipe previews and dry-run reporting
-- Percona/reladiff-style chunked checksums and recursive narrowing
-- explicit cross-engine canonicalization before hashing
-- expand/contract rollout with dual-write, backfill, shadow-read, canary, and
-  cutover gates
-
-See [docs/architecture.md](docs/architecture.md).
-
-## License
-
-Irodori-authored code in this repository is available under `MIT OR 0BSD` unless
-a file says otherwise. See [LICENSE](LICENSE).
-
-## Disclaimer
-
-Migration planning and diff helpers can produce destructive or incomplete plans
-when used with real systems. Review generated SQL, backups, permissions, and
-target connections before execution. For the broader product disclaimer, see
-<https://hjosugi.github.io/irodori-docs/disclaimer.html>.
+License: `MIT OR 0BSD`.
