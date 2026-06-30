@@ -2,6 +2,13 @@
 
 All notable changes to `irodori-migration` are documented here.
 
+## 0.2.0 - 2026-06-30
+
+- Added tracing instrumentation for export and migration plan generation paths.
+- Added snapshot coverage for generated migration SQL.
+- Added container-managed Postgres/MySQL checksum SQL smoke tests.
+- Documented container-managed and externally managed live SQL test flows.
+
 ## 0.1.3 - 2026-06-29
 
 - Added ignored live SQL smoke tests for generated Postgres and MySQL checksum
