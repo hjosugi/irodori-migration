@@ -23,6 +23,20 @@ The live smoke tests are ignored by default and execute generated checksum SQL
 against real Postgres and MySQL databases. They are intended for CI or a local
 database sandbox.
 
+### Container-managed databases
+
+Use the `testcontainers` suite when CI can run Docker. This starts disposable
+Postgres and MySQL instances and connects with native Rust clients, so no
+`psql` or `mysql` executables are required:
+
+```sh
+cargo test --test container_sql -- --ignored --test-threads=1
+```
+
+### Externally managed databases
+
+The legacy live SQL test can still target databases you started yourself:
+
 ```sh
 export IRODORI_POSTGRES_URL='postgres://postgres:postgres@127.0.0.1:5432/irodori_migration'
 export IRODORI_MYSQL_HOST='127.0.0.1'

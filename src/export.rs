@@ -46,6 +46,7 @@ impl ExportControl for () {}
 ///
 /// Cancellation is a normal successful outcome. The encoder is always flushed,
 /// including after a partial export.
+#[tracing::instrument(skip_all, fields(progress_every_rows = config.progress_every_rows))]
 pub fn export_rows<R>(
     rows: R,
     encoder: &mut dyn TabularEncoder,
@@ -78,6 +79,7 @@ where
         control.progress(rows_written)?;
     }
 
+    tracing::debug!(rows_written, cancelled, "export finished");
     Ok(ExportReport {
         rows_written,
         cancelled,

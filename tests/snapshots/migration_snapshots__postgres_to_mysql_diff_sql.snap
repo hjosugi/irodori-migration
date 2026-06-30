@@ -1,0 +1,106 @@
+---
+source: tests/migration_snapshots.rs
+expression: plan.diff_sql
+---
+-- MySQL/MariaDB bucket-level diff with full-join emulation.
+WITH source_buckets AS (
+  -- Hash bucket fingerprint. Use this before row-level diff on very large tables.
+  SELECT
+    COALESCE(irodori_partition, '__IRODORI_NULL_PARTITION__') AS irodori_partition,
+    SUBSTR(irodori_key_hash, 1, 3) AS irodori_hash_bucket,
+    COUNT(*) AS row_count,
+    COUNT(DISTINCT irodori_key_hash) AS key_count,
+    MIN(irodori_row_hash) AS min_row_hash,
+    MAX(irodori_row_hash) AS max_row_hash
+  FROM irodori_source_manifest
+  GROUP BY COALESCE(irodori_partition, '__IRODORI_NULL_PARTITION__'), SUBSTR(irodori_key_hash, 1, 3)
+),
+target_buckets AS (
+  -- Hash bucket fingerprint. Use this before row-level diff on very large tables.
+  SELECT
+    COALESCE(irodori_partition, '__IRODORI_NULL_PARTITION__') AS irodori_partition,
+    SUBSTR(irodori_key_hash, 1, 3) AS irodori_hash_bucket,
+    COUNT(*) AS row_count,
+    COUNT(DISTINCT irodori_key_hash) AS key_count,
+    MIN(irodori_row_hash) AS min_row_hash,
+    MAX(irodori_row_hash) AS max_row_hash
+  FROM irodori_target_manifest
+  GROUP BY COALESCE(irodori_partition, '__IRODORI_NULL_PARTITION__'), SUBSTR(irodori_key_hash, 1, 3)
+)
+SELECT
+  s.irodori_partition,
+  s.irodori_hash_bucket,
+  CASE WHEN t.irodori_hash_bucket IS NULL THEN 'source_only_bucket' ELSE 'changed_bucket' END AS diff_kind,
+  s.row_count AS source_row_count,
+  t.row_count AS target_row_count,
+  s.key_count AS source_key_count,
+  t.key_count AS target_key_count,
+  s.min_row_hash AS source_min_row_hash,
+  t.min_row_hash AS target_min_row_hash,
+  s.max_row_hash AS source_max_row_hash,
+  t.max_row_hash AS target_max_row_hash
+FROM source_buckets s
+LEFT JOIN target_buckets t
+  ON s.irodori_partition = t.irodori_partition AND s.irodori_hash_bucket = t.irodori_hash_bucket
+WHERE t.irodori_partition IS NULL AND t.irodori_hash_bucket IS NULL
+   OR s.row_count <> t.row_count
+   OR s.key_count <> t.key_count
+   OR s.min_row_hash <> t.min_row_hash
+   OR s.max_row_hash <> t.max_row_hash
+UNION ALL
+SELECT
+  t.irodori_partition,
+  t.irodori_hash_bucket,
+  'target_only_bucket' AS diff_kind,
+  s.row_count AS source_row_count,
+  t.row_count AS target_row_count,
+  s.key_count AS source_key_count,
+  t.key_count AS target_key_count,
+  s.min_row_hash AS source_min_row_hash,
+  t.min_row_hash AS target_min_row_hash,
+  s.max_row_hash AS source_max_row_hash,
+  t.max_row_hash AS target_max_row_hash
+FROM target_buckets t
+LEFT JOIN source_buckets s
+  ON s.irodori_partition = t.irodori_partition AND s.irodori_hash_bucket = t.irodori_hash_bucket
+WHERE s.irodori_partition IS NULL AND s.irodori_hash_bucket IS NULL
+ORDER BY 1, 2
+LIMIT 25;
+
+-- MySQL/MariaDB bucket-scoped row diff with full-join emulation.
+WITH source_rows AS (
+  SELECT * FROM irodori_source_manifest
+  WHERE SUBSTR(irodori_key_hash, 1, 3) = '${IRODORI_HASH_BUCKET}'
+    AND COALESCE(irodori_partition, '__IRODORI_NULL_PARTITION__') = '${IRODORI_PARTITION}'
+),
+target_rows AS (
+  SELECT * FROM irodori_target_manifest
+  WHERE SUBSTR(irodori_key_hash, 1, 3) = '${IRODORI_HASH_BUCKET}'
+    AND COALESCE(irodori_partition, '__IRODORI_NULL_PARTITION__') = '${IRODORI_PARTITION}'
+)
+SELECT
+  s.order_id AS order_id,
+  s.line_id AS line_id,
+  CASE WHEN t.irodori_row_hash IS NULL THEN 'source_only' ELSE 'changed' END AS diff_kind,
+  s.irodori_row_hash AS source_hash,
+  t.irodori_row_hash AS target_hash
+FROM source_rows s
+LEFT JOIN target_rows t
+  ON s.order_id = t.order_id
+  AND s.line_id = t.line_id
+WHERE t.irodori_row_hash IS NULL
+   OR s.irodori_row_hash <> t.irodori_row_hash
+UNION ALL
+SELECT
+  t.order_id AS order_id,
+  t.line_id AS line_id,
+  'target_only' AS diff_kind,
+  s.irodori_row_hash AS source_hash,
+  t.irodori_row_hash AS target_hash
+FROM target_rows t
+LEFT JOIN source_rows s
+  ON s.order_id = t.order_id
+  AND s.line_id = t.line_id
+WHERE s.irodori_row_hash IS NULL
+ORDER BY 1, 2
+LIMIT 25;
